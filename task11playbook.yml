@@ -1,0 +1,38 @@
+- hosts: all
+  tasks:
+  - name: Installing JDK for Hadoop ...
+    yum:
+            name: "http://anfadmin.ucsd.edu/linux/RHEL/7/x86_64/jdk-8u171-linux-x64.rpm"
+            state: present
+            disable_gpg_check: yes
+
+  - name: Checking Hadoop is present or not
+    command: hadoop version
+    register: hadoop_status
+    changed_when: hadoop_status.rc != 0
+    failed_when: False
+
+
+  - name: Installing Hadoop in the system
+    command: rpm -i http://archive.apache.org/dist/hadoop/core/hadoop-1.2.1/hadoop-1.2.1-1.x86_64.rpm --force
+    when: hadoop_status.rc != 0
+    args:
+            warn: no
+
+  - name: Clearing RAM
+    copy:
+            content: 3
+            dest: /proc/sys/vm/drop_caches
+            unsafe_writes: yes
+
+
+
+
+- hosts: [NameNode]
+  roles:
+          - role: /etc/ansible/HadoopRole/NameNode
+
+
+- hosts: [DataNode]
+  roles:
+          - role: /etc/ansible/HadoopRole/DataNode
